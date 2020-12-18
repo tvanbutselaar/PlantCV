@@ -24,7 +24,10 @@
 # Subsequent analysis will prep a figure with bars for every category in the experiment. This part is dependent on a notes.txt file, which should contain: 
 	# picture names and their corresponding genotypes (also include a stylized genotype if you want), this all tab-separated. The stylized genotype should be the last part of this line. Each picture on new line. 
 	# a line describing the squared pixel to squared mm ratio. the line must contain the word 'Pixel ratio' (Case-sensitive) and must be ending with a colon followed by the squared pixel to squared mm ratio.
-
+		# Protips: 
+			# flank your text with $ if you want the text to be printed in italics in the plot
+			# use mathregular-based expressions if you want to use subscript, superscript, or special characters in the plot: https://matplotlib.org/3.3.3/tutorials/text/mathtext.html
+		
 # Use a representative picture and analyze in Photoshop to estimate the parameters in the variable list below. These parameters will be called on in the image analysis pipeline. These are the primary parameters that need to be adjusted for your images. The main variables to be altered are those for ROI, Cluster Nrow/Ncol, Rotation, and Shift numbers. Run the program locally and use output from the first image to further estimate other parameters
 
 ###
