@@ -1,0 +1,5 @@
+Original picname	JPG	Category	Category as annotation in graph
+DSC_9295.NEF	DSC_9295.jpg	Col-0	Col-0
+DSC_9287.NEF	DSC_9287.jpg	M0	$\mathregular{M_0}$
+
+Pixel ratio 152.11 pix / 20mm :57.84363025
