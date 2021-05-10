@@ -34,19 +34,20 @@
 
 mpwd=$(pwd)
 
-cat <<\EOF > "$mpwd"/$2_variables.txt
 #Use a representative picture and analyze in Photoshop to estimate the parameters in the variable list below. These parameters will be called on in the image analysis pipeline. These are the primary parameters that need to be adjusted for your images. The main variables to be altered are those for ROI, Cluster Nrow/Ncol, Rotation, and Shift numbers. Run the program locally and use output from the first image to further estimate other parameters
+
+cat <<\EOF > "$mpwd"/$2_variables.txt
 0 ##			Script 1+2 ROI x_adj			the top-left pixel defining the rectangle of ROI
 0 ##			Script 1+2	ROI y_adj			the top-left pixel defining the rectangle of ROI
-1900 ##	Script 1+2	ROI w_adj			value for how far along y-axis from top-left pixel the ROI stretches
-3800 ##	Script 1+2	ROI h_adj			value for how far along x-axis from top-left pixel the ROI stretches
-7 ##		Script 1		cluster nrow		value for number of rows of cluster. if plants parts are identified okay, but are not declustered correctly, this is the main parameter to tweak
-9 ##		Script 1		cluster ncol		value for number of columns to cluster. if plants parts are identified okay, but are not declustered correctly, this is the main parameter to tweak
--1.2 ##		Script 1		rotation_deg		rotation angle in degrees, can be a negative number, positive values move counter clockwise
+1700 ##	Script 1+2	ROI h_adj			value for how far along y-axis from top-left pixel the ROI stretches
+3400 ##	Script 1+2	ROI w_adj			value for how far along x-axis from top-left pixel the ROI stretches
+4 ##		Script 1		cluster nrow		value for number of rows of cluster. if plants parts are identified okay, but are not declustered correctly, this is the main parameter to tweak
+6 ##		Script 1		cluster ncol		value for number of columns to cluster. if plants parts are identified okay, but are not declustered correctly, this is the main parameter to tweak
+-0.3 ##		Script 1		rotation_deg		rotation angle in degrees, can be a negative number, positive values move counter clockwise
 100 ##		Script 1		shift number		value for shifting image up x pixels, must be greater than 1
-50 ##		Script 1		shift number		value for shifting image left x pixels, must be greater than 1
-118 ##		Script 1		bin treshold		threshold value (0-255) for binary tresholding, higher values will generate more background. if missing a lot of plant parts, or you have too much background, this is the main parameter to tweak
-500 ##		Script 1		fill size				minimum pixel size for objects, those smaller will be filled
+150 ##		Script 1		shift number		value for shifting image left x pixels, must be greater than 1
+120 ##		Script 1		bin treshold		threshold value (0-255) for binary tresholding, higher values will generate more background. if missing a lot of plant parts, or you have too much background, this is the main parameter to tweak
+200 ##		Script 1		fill size				minimum pixel size for objects, those smaller will be filled
 1 ##			Script 1		dilation kernel 	an odd integer that is used to build a ksize x ksize matrix using np.ones. Must be greater than 1 to have an effect. Greater values will ensure all plant parts are included, but also will overestimate size of plant
 1 ##			Script 1		dilation iter		number of consecutive filtering passes for dilation. Greater values will ensure all plant parts are included, but also will overestimate size of plant
 EOF
@@ -261,6 +262,7 @@ import scipy.stats as stats
 from statsmodels.stats.multicomp import (pairwise_tukeyhsd, MultiComparison)
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+import matplotlib
 
 try:
     __IPYTHON__
@@ -444,7 +446,9 @@ print("Environment loaded. Processing data...")
 
 #Now load the input as a pandas file and the notes file up until the first blank line and then input to dict
 dictio=dict(zip(["pic", "plantnr", "SqPix"],['str','int','float']))
-indf=pd.read_csv(inres, sep=" ", header=None, names=["pic", "plantnr", "SqPix"], dtype=dictio)
+indf=pd.read_csv(inres, sep=" ", header=None, names=["pic", "plantnr", "SqPix"])
+indf=indf[indf['SqPix'].apply(np.isreal)]
+indf=indf.astype(dictio)
 indf['plantnr']=indf.index
 
 picnames=list(indf.pic.unique())
@@ -509,7 +513,7 @@ for tick, label in zip(pos, ax.get_xticklabels()):
     ax.text(pos[tick], maxes[soneg.get(tick)] + 0.4*ydif,letterdf.iloc[tick]['string'], horizontalalignment="center", color="black", size="medium", weight="semibold")
 
 ax.set_xticks(ax.get_xticks())
-if catorder.isin("mathregular"):
+if any("mathregular" in s for s in catorder):
     ax.set_xticklabels([textwrap.fill(i, 30) for i in catorder],rotation=45, ha="right")
 else:
     ax.set_xticklabels([textwrap.fill(i, 15) for i in catorder],rotation=45, ha="right")
@@ -552,12 +556,12 @@ cd "$mpwd"/$2/$picname
 
 #Decluster the image
 echo "Declustering image " $file #A shout-out to stdout what image it's currently working on, so you have an idea where in your set-up it is.
-python3 "$mpwd"/$2_python1.py -i "$file" -o "$mpwd"/$2/$picname -D print -v "$mpwd"/$2/variables.txt #Start the declustering of multi-plant pictures. The -D argument will ensure that also intermediary pictures of each processing step are saved. It is important to inspect these intermediary pictures after the pipeline is finished to get an idea of how the declustering behaved, and if parameters need tweaking.
+python3 "$mpwd"/$2_python1.py -i "$file" -o "$mpwd"/$2/$picname -D print -v "$mpwd"/$2_variables.txt #Start the declustering of multi-plant pictures. The -D argument will ensure that also intermediary pictures of each processing step are saved. It is important to inspect these intermediary pictures after the pipeline is finished to get an idea of how the declustering behaved, and if parameters need tweaking.
 
 #And per declustered output file, measure the leaf area
 for file2 in "$mpwd/$2/$picname/$picname"*_mask.png
 do
-	python3 "$mpwd"/$2_python2.py -i "$file2" -D print -r "$mpwd"/$2/$picname.results.txt -v "$mpwd"/$2/variables.txt #Now analyze every single (supposed) plant from the declustered output
+	python3 "$mpwd"/$2_python2.py -i "$file2" -D print -r "$mpwd"/$2/$picname.results.txt -v "$mpwd"/$2_variables.txt #Now analyze every single (supposed) plant from the declustered output
 done
 
 EOF
