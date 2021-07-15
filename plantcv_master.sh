@@ -1,6 +1,6 @@
 ###
 # @author: tvanbutselaar
-# Current version: 20201217
+# Current version: 20210715
 # Changes: HPC compatibility
 
 # Working script for PlantCV image analysis tool to measure rosette area in multiplant pictures. Information on https://plantcv.readthedocs.io/. This script encompasses 5 EOF files that form the main functions, and a final for loop that calls the first EOF bash script for all pictures in input folder.
