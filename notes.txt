@@ -1,5 +1,38 @@
-Original picname	JPG	Category	Category as annotation in graph
-DSC_9295.NEF	DSC_9295.jpg	Col-0	Col-0
-DSC_9287.NEF	DSC_9287.jpg	M0	$\mathregular{M_0}$
+JPG	Category	Pretty named category for graphing
+DSC_9295.jpg	Col-0	Col-0
+DSC_9287.jpg	M0	$\mathregular{M_0}$
 
-Pixel ratio 152.11 pix / 20mm :57.84363025
+pixel_ratio:57.84363025
+
+shift_up:100
+shift_left:50
+ROI_x_adj:0
+ROI_y_adj:0
+ROI_h_adj:1900
+ROI_w_adj:3800
+rotation_deg:-1.2
+cluster_nrow:7
+cluster_ncol:9
+bin_tresh:118
+fill_size:500
+dilation_kernel:1
+dilation_iter:1
+
+#Variable description
+# pixel_ratio	Ratio between squared pixels to squared mm (e.g. 150 pixels = 20 mm, so 22500 pixels2 = 400 mm2, so the ratio = 56.25)
+# shift_up	Shift image up x pixels, black pixels will fill gap underside
+# shift_left	Shift image left x pixels, black pixels will fill gap right side
+# ROI x_adj	Top-left pixel of ROI
+# ROI y_adj	Top-left pixel of ROI
+# ROI h_adj	ROI stretch along y_axis
+# ROI w_adj	ROI strech along x_axis
+# rotation_deg	Rotation angle, positive values move counter clockwise
+# cluster_nrow	Number of rows in grid
+# cluster_ncol	Number of columns in grid
+# bin_tresh	Treshold value (0-255) for binary tresholding, higher values generate more background
+# fill_size	Minimum pixel size for objects, those smaller will be filled
+# dilation_kernel	Must be an odd integer that is used to build a ksize x ksize matrix using np.ones. Must be greater than 1 to have an effect. Greater values will ensure all plant parts are included, but also will overestimate size of object
+# dilation_iter	Number of consecutive filtering passes for dilation. Greater values will ensure all plant parts are included, but also will overestimate size of object
+
+#Use a representative picture and analyze in Photoshop/GIMP to estimate the parameters in the variable list. These parameters will be called on in the image analysis pipeline. These are the primary parameters that need to be adjusted for your images. From my experience, the main variables to be altered are those for ROI, Cluster Nrow/Ncol, Rotation, and Shift numbers. Depending on brightness of the picture one might need to adjust the treshold, and possible the fill size. Run the program locally and use output from the first image to further estimate other parameters. All debug options are enabled standard, so you will get all the intermediate pictures as described in the PlantCV manual.
+
