@@ -483,9 +483,9 @@ for line in open(notes, 'r').readlines():
     if any(name in line for name in picnames):
         cat=line.strip().split("\t")[-1]
         name=line.split("\t")[0].split(".")[0]
+        catdict[name] = cat
         if cat not in catorder:
             catorder.append(cat)
-            catdict[name] = cat
     if line.startswith("pixel_ratio"):
         pixratio=float(line.strip().split(":")[-1])
 
@@ -507,16 +507,23 @@ thdf = pd.DataFrame(data=thsd._results_table.data[1:], columns=thsd._results_tab
 letterdf=multi_comparisons_letter_df_generator(thdf)
 
 #Now plot the dataseries per column
-sb.set_style("darkgrid")
+plt.style.use("default")
+# sb.set_style("whitegrid")
 matplotlib.rcParams['ps.fonttype'] = 42 #Needed for Illustrator-editable files
 matplotlib.rcParams['pdf.fonttype'] = 42 #Needed for Illustrator-editable files
-sb.set(font_scale=1.2)
+plt.rc('font', size=15)
+matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['axes.grid'] = True
+matplotlib.rcParams['axes.axisbelow'] = True
+matplotlib.rcParams['axes.grid.axis'] = 'both'
+
 fig, ax = plt.subplots(figsize=(1+0.75*len(catorder),7))
 bx=sb.boxplot(
     data=indf.reset_index(),
     x="cat",
     y="Sqmm",
     order=catorder,
+    palette="Dark2",
     showfliers=False)
 sw=sb.swarmplot(
     data=indf,
@@ -524,8 +531,10 @@ sw=sb.swarmplot(
     y="Sqmm",
     order=catorder,
     linewidth=1,
-    color='.2',
+    palette="Dark2",
+    alpha=0.4,
     size=4)
+sb.despine()
 
 maxes=indf.groupby(['cat'])['Sqmm'].max()
 soneg=dict(zip(range(0, len(catorder),1), catorder))
@@ -557,7 +566,11 @@ ANOVA:
 Post-Hoc:
 {2}""".format(str(shap), str(aov), str(thsd)))
 
-print("All done. boxplot.png/.svg and statistics.txt saved to {0}".format(mwd))
+##And the dataframes
+indf.to_csv(os.path.join(mwd, "{0}_df.tsv".format(args.output)), sep="\t")
+indf.to_pickle(os.path.join(mwd, "{0}_df.pkl".format(args.output)))
+
+print("All done. {1}_ boxplot.png/.svg, statistics.txt, dataframe.tsv/.pkl saved to {0}".format(mwd, args.output))
 
 EOF
 
