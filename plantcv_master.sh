@@ -1,7 +1,7 @@
 ###
 # @author: tvanbutselaar
-# Current version: 20210720
-# Changes: HPC compatibility, variables.txt now moved to notes.txt
+# Current version: 20211123
+# Changes: Aesthetic changes to plot, bugfix to catdict/catorder
 
 # This version compatible with PlantCV v3.12.1 (and possibly later)
 
