@@ -308,164 +308,53 @@ notes=os.path.join(mwd, "notes.txt")
 
 #Dependency: pairwise comparison letter generator
 
-"""
-'Python pairwise comparison letter generator'
-
-Github: PhilPlantMan
-"""
-import string
-import random
-
-def multi_comparisons_letter_df_generator(comparisons_df, letter_ordering_series = None, 
-                                          primary_optimisation_parameter = "Number of different letters", 
-                                          monte_carlo_cycles = 5, letter_separator = '', ): 
-    """
-    Function takes a df listing pairwise comparisons with a cols labelled 'group1' and 'group2' for the two groups being compared 
-    and another column labelled 'reject' with boolean values corresponding to whether the null hypothesis should be rejected 
-    i.e. True: Both treatments are significantly different
+def pletters(thsd):
+    #this is a function to do Piepho method.  AN Alogrithm for a letter based representation of al-pairwise comparisons.  
+    tot=len(thsd.groupsunique)
+    #make an empty dataframe that is a square matrix of size of the groups. #set first column to 1
+    df_ltr=pd.DataFrame(np.nan, index=np.arange(tot),columns=np.arange(tot))
+    df_ltr.iloc[:,0]=1
+    count=0
+    df_nms = pd.DataFrame('', index=np.arange(tot), columns=['names'])  # I make a dummy dataframe to put axis labels into.  sd stands for signifcant difference
     
-    letter_ordering_series (default = None): In theory, which letters are assigned to each non-significance grouping is
-    arbitrary and therefor the order can be changed. Offering letter_ordering_series a series with the same index as the output
-    will make sure that the order that letters are assigned will follow letter_ordering_series from max to min. For boxplots,
-    letter_ordering_series with median values is a good choice.
+    for i in np.arange(tot):   #I loop through and make all pairwise comparisons. 
+        for j in np.arange(i+1,tot):
+            #print('i=',i,'j=',j,thsd.reject[count])
+            if thsd.reject[count]==True:
+                for cn in np.arange(tot):
+                    if df_ltr.iloc[i,cn]==1 and df_ltr.iloc[j,cn]==1: #If the column contains both i and j shift and duplicat
+                        df_ltr=pd.concat([df_ltr.iloc[:,:cn+1],df_ltr.iloc[:,cn+1:].T.shift().T],axis=1)
+                        df_ltr.iloc[:,cn+1]=df_ltr.iloc[:,cn]
+                        df_ltr.iloc[i,cn]=0
+                        df_ltr.iloc[j,cn+1]=0
+                    #Now we need to check all columns for abosortpion.
+                    for cleft in np.arange(len(df_ltr.columns)-1):
+                        for cright in np.arange(cleft+1,len(df_ltr.columns)):
+                            if (df_ltr.iloc[:,cleft].isna()).all()==False and (df_ltr.iloc[:,cright].isna()).all()==False: 
+                                if (df_ltr.iloc[:,cleft]>=df_ltr.iloc[:,cright]).all()==True:  
+                                    df_ltr.iloc[:,cright]=0
+                                    df_ltr=pd.concat([df_ltr.iloc[:,:cright],df_ltr.iloc[:,cright:].T.shift(-1).T],axis=1)
+                                if (df_ltr.iloc[:,cleft]<=df_ltr.iloc[:,cright]).all()==True:
+                                    df_ltr.iloc[:,cleft]=0
+                                    df_ltr=pd.concat([df_ltr.iloc[:,:cleft],df_ltr.iloc[:,cleft:].T.shift(-1).T],axis=1)
     
-    monte_carlo_cycles (default = 5): Function will always return correct letter representation however it may be suboptimal. 
-    Within each monte carlo cycle, a random letter is deleted until the representation breaks. The result with the optimum
-    number layout of letters after n monte_carlo_cycles is returned. 
+            count+=1
     
-    The optimum letter layout is set by primary_optimisation_parameter (default = "Number of different letters"):
-        'Number of different letter' optimises for fewest different letters
-        "Min letters per row" optimises for the fewest letters assigned per treatment
-        "Letter total" optimises for the fewest total letters of the treatments combined
-        
-    letter_separator (default = ''): Separator for each letter in string assigned to each treatment
+    #I sort so that the first column becomes A        
+    df_ltr=df_ltr.sort_values(by=list(df_ltr.columns),axis=1,ascending=False)
     
+    # I assign letters to each column
+    for cn in np.arange(len(df_ltr.columns)):
+        df_ltr.iloc[:,cn]=df_ltr.iloc[:,cn].replace(1,chr(97+cn)) 
+        df_ltr.iloc[:,cn]=df_ltr.iloc[:,cn].replace(0,'')
+        df_ltr.iloc[:,cn]=df_ltr.iloc[:,cn].replace(np.nan,'') 
     
-    Letter representation is determined by the method described by Piepho 2004: An Algorithm for a Letter-Based Representation
-    of All-Pairwise Comparisons
-    """
-    #'Insert' stage
-    #make df with all unique groups as index
-    letters_df = comparisons_df['group1'].append(comparisons_df['group2']).drop_duplicates().to_frame().set_index(0)
-    
-    letters_df[letters_df.shape[1]] = 1
-    for pos_result in comparisons_df.loc[comparisons_df['reject']==True].index:
-        group1 = comparisons_df.loc[pos_result, 'group1']
-        group2 = comparisons_df.loc[pos_result, 'group2']
-        for letter_col in letters_df:
-            group1_val = letters_df.loc[group1,letter_col]
-            group2_val = letters_df.loc[group2,letter_col]
-            if group1_val == 1 and group2_val == 1:
-                #duplicate column
-                new_col = letters_df.shape[1]
-                letters_df[new_col] = letters_df[letter_col]
-                #del val at group1 first col and at group2 new col
-                letters_df.loc[group1,letter_col] = 0
-                letters_df.loc[group2,new_col] = 0
-    #'Absorb' stage          
-    for col in letters_df:
-       other_cols_list = list(letters_df)
-       other_cols_list.remove(col)
-       col_total = letters_df[col].sum()
-       for other_col in other_cols_list:
-           matched_total = 0
-           for row in letters_df.index:
-               if letters_df.loc[row, col] == 1 and letters_df.loc[row, other_col]: matched_total +=1
-           if col_total == matched_total:
-               letters_df.drop(col, axis = 1, inplace = True)  
-               break
-        
-    def check_letters_against_tests(test_df, letters_df):
-        if letters_df.sum(axis = 1).min() == 0: return False
-        for result_row in test_df.index:
-            group1 = test_df.loc[result_row, 'group1']
-            group2 = test_df.loc[result_row, 'group2']
-            reject = bool(test_df.loc[result_row, 'reject'])
-            count_of_true_trues = 0
-            count_of_true_falses = 0
-            for letter_col in letters_df:
-                group1_val = letters_df.loc[group1,letter_col]
-                group2_val = letters_df.loc[group2,letter_col]
-                if reject:
-                    if group1_val != group2_val: count_of_true_trues += 1
-                    if group1_val == 1 and group2_val == 1: 
-                        return False
-                if reject == False:
-                    if group1_val == 1 and group2_val == 1: count_of_true_falses += 1
-            if reject and count_of_true_trues == 0: 
-                return False
-            if reject == False and count_of_true_falses == 0: 
-                return False
-        return True
-
-    #'Sweep stage' with monte carlo optimisation
-    for i in range(monte_carlo_cycles):
-        num_of_letters = letters_df.sum().sum()
-        num_list = list(np.arange(start = 1, stop = 1+ num_of_letters))
-        letters_df_monte_order = letters_df.copy()
-        for row in letters_df_monte_order.index:
-            for col in letters_df_monte_order:
-                if letters_df_monte_order.loc[row,col] == 0: continue
-                random_num = random.sample(num_list, 1)[0]
-                letters_df_monte_order.loc[row,col] = random_num
-                num_list.remove(random_num)
-        
-        current_letters_df = letters_df.copy()
-        for pos in range(num_of_letters + 1):     
-            mask = letters_df_monte_order.isin([pos])
-            zero_df = letters_df.copy().loc[:] = 0
-            letters_df_copy = current_letters_df.copy()
-            letters_df_copy.mask(mask, other = zero_df, inplace = True)
-            if check_letters_against_tests(comparisons_df,letters_df_copy):
-                current_letters_df = letters_df_copy
-        
-        for col in letters_df:
-            if current_letters_df[col].sum() == 0: current_letters_df.drop(col, axis = 1, inplace = True)
-            
-        # determine fitness parameters for optimisation
-        current_fitness_parameter_vals = {"Min letters per row":current_letters_df.sum(axis = 1).max(),
-                                          "Number of different letters": current_letters_df.shape[1],
-                                          "Letter total": current_letters_df.sum().sum()}
-        if i == 0: 
-            best_fitness_parameter_vals = current_fitness_parameter_vals
-            best_letters_df = current_letters_df
-            continue
-        
-        if current_fitness_parameter_vals[primary_optimisation_parameter] > best_fitness_parameter_vals[primary_optimisation_parameter]:
-            continue
-        if current_fitness_parameter_vals[primary_optimisation_parameter] < best_fitness_parameter_vals[primary_optimisation_parameter]:
-            best_letters_df = current_letters_df.copy()
-            best_fitness_parameter_vals = current_fitness_parameter_vals
-            
-        if sum(current_fitness_parameter_vals.values()) < sum(best_fitness_parameter_vals.values()):
-            best_letters_df = current_letters_df.copy()
-            best_fitness_parameter_vals = current_fitness_parameter_vals
-    
-    #order cols
-    if isinstance(letter_ordering_series, pd.Series):
-        scoring_df = pd.DataFrame(index = best_letters_df.index)
-        for row in best_letters_df.index:
-            for col in best_letters_df:
-                scoring_df.loc[row, col] = best_letters_df.loc[row, col] * letter_ordering_series[row]
-        scoring_df = scoring_df.replace(0, np.NaN)
-        scoring_means = scoring_df.mean(axis = 0).sort_values(ascending = False)
-        best_letters_df = best_letters_df[scoring_means.index]
-    # letter the cols     
-    for col_name, col_num in zip(best_letters_df, range(len(best_letters_df.columns))):
-        letter = string.ascii_lowercase[col_num]
-        best_letters_df.loc[best_letters_df[col_name] == 1, col_name] = letter
-    # make df with strings ready for presentation
-    best_string_df = pd.DataFrame(index = best_letters_df.index)
-    best_string_df.loc[:,'string'] = ""
-    for row in best_letters_df.index:
-        for col in best_letters_df:
-            if best_letters_df.loc[row, col] != 0:
-                letter_string = best_string_df.loc[row, 'string']
-                letter = best_letters_df.loc[row, col]
-                if letter_string == "": best_string_df.loc[row, 'string'] = letter
-                else: best_string_df.loc[row, 'string'] = letter_separator.join((letter_string, letter))
-                
-    return best_string_df
+    #I put all the letters into one string
+    df_ltr=df_ltr.astype(str)
+    #print(df_ltr)
+    #print('\n')
+    #print(df_ltr.sum(axis=1))
+    return df_ltr.sum(axis=1)
 
 print("Environment loaded. Processing data...")
 
@@ -503,8 +392,7 @@ f=ols("Sqmm ~ cat", data = indf).fit()
 aov=sm.stats.anova_lm(f, typ=2)
 mc=MultiComparison(indf['Sqmm'], indf['cat'], group_order=catorder)
 thsd=mc.tukeyhsd()
-thdf = pd.DataFrame(data=thsd._results_table.data[1:], columns=thsd._results_table.data[0])
-letterdf=multi_comparisons_letter_df_generator(thdf)
+letterdf=pletters(thsd)
 
 #Now plot the dataseries per column
 plt.style.use("default")
