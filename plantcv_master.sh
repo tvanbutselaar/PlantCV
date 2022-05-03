@@ -432,11 +432,11 @@ ydif=np.abs(ax.get_yticks()[0]-ax.get_yticks()[1])
 ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]+ydif)
 
 for tick, label in zip(pos, ax.get_xticklabels()):
-    ax.text(pos[tick], maxes[soneg.get(tick)] + 0.4*ydif,letterdf.iloc[tick]['string'], horizontalalignment="center", color="black", size="medium", weight="semibold")
+    ax.text(pos[tick], maxes[soneg.get(tick)] + 0.4*ydif,letterdf.iloc[tick], horizontalalignment="center", color="black", size="medium", weight="semibold")
 
 ax.set_xticks(ax.get_xticks())
-if any("mathregular" in s for s in catorder):
-    ax.set_xticklabels([textwrap.fill(i, 30) for i in catorder],rotation=45, ha="right")
+if any("math" in s for s in catorder):
+    ax.set_xticklabels([textwrap.fill(i, 45) for i in catorder],rotation=45, ha="right")
 else:
     ax.set_xticklabels([textwrap.fill(i, 15) for i in catorder],rotation=45, ha="right")
 ax.set_ylabel("Rosette area ($\mathregular{mm^2}$)")
