@@ -495,7 +495,7 @@ EOF
 #Second bash script that summarizes output and calls Python3
 cat <<\EOF > "$mpwd"/"$2"_bash2.sh
 #!/bin/bash
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --mem=10G
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=t.vanbutselaar@uu.nl
