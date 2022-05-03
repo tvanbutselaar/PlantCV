@@ -435,10 +435,14 @@ for tick, label in zip(pos, ax.get_xticklabels()):
     ax.text(pos[tick], maxes[soneg.get(tick)] + 0.4*ydif,letterdf.iloc[tick], horizontalalignment="center", color="black", size="medium", weight="semibold")
 
 ax.set_xticks(ax.get_xticks())
-if any("math" in s for s in catorder):
-    ax.set_xticklabels([textwrap.fill(i, 45) for i in catorder],rotation=45, ha="right")
-else:
-    ax.set_xticklabels([textwrap.fill(i, 15) for i in catorder],rotation=45, ha="right")
+xticks=[]
+for s in catorder:
+    if "math" in s:
+        xticks.append(textwrap.fill(i, 45) for i in catorder)
+    else:
+        xticks.append(textwrap.fill(i, 20) for i in catorder)
+ax.set_xticklabels(xticks, rotation=45, ha="right")
+
 ax.set_ylabel("Rosette area ($\mathregular{mm^2}$)")
 ax.set_xlabel("")
 plt.tight_layout()
