@@ -296,13 +296,16 @@ try:
 except NameError:
     mwd=os.getcwd()
     print("Running from command line")
+    parser = argparse.ArgumentParser(description="Imaging postprocessing")
+    parser.add_argument("-o", "--output", help="output folder name", required=True)
+    args = parser.parse_args()
 else:
-    mwd="C:/Users/3630188/OneDrive - Universiteit Utrecht/dmr6dlo1 EMS/20201119 Complementation assay" #If using in Spyder/IPython
+    mwd="C:/Users/3630188/OneDrive - Universiteit Utrecht/dmr6dlo1 EMS/Complementation/20220525 Complementation 188.2" #If using in Spyder/IPython
+    parser = argparse.ArgumentParser(description="Imaging postprocessing")
+    args = parser.parse_args()
+    args.output="output"
     print("Running from Spyder/IPython")
 
-parser = argparse.ArgumentParser(description="Imaging postprocessing")
-parser.add_argument("-o", "--output", help="output folder name", required=True)
-args = parser.parse_args()
 inres=os.path.join(mwd, "{0}.totalresults.txt".format(args.output))
 notes=os.path.join(mwd, "notes.txt")
 
@@ -438,16 +441,16 @@ ax.set_xticks(ax.get_xticks())
 xticks=[]
 for s in catorder:
     if "math" in s:
-        xticks.append(textwrap.fill(i, 45) for i in catorder)
+        xticks.append(textwrap.fill(s, 55))
     else:
-        xticks.append(textwrap.fill(i, 20) for i in catorder)
+        xticks.append(textwrap.fill(s, 30))
 ax.set_xticklabels(xticks, rotation=45, ha="right")
 
 ax.set_ylabel("Rosette area ($\mathregular{mm^2}$)")
 ax.set_xlabel("")
-plt.tight_layout()
-plt.savefig(os.path.join(mwd, "{0}_boxplot.png".format(args.output)))
-plt.savefig(os.path.join(mwd, "{0}_boxplot.svg".format(args.output)))
+plt.savefig(os.path.join(mwd, "{0}_boxplot.png".format(args.output)), bbox_inches="tight")
+plt.savefig(os.path.join(mwd, "{0}_boxplot.svg".format(args.output)), bbox_inches="tight")
+
 
 #And save the statistics file
 with open(os.path.join(mwd, "{0}_statistics.txt".format(args.output)), "w") as text_file:
